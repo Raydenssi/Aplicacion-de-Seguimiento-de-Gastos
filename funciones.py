@@ -1,75 +1,81 @@
 import pickle
+from datetime import datetime
+from typing import List
 
-# Registro de Transacciones
+# Clase que representa una transacción
+class Transaccion:
+    def __init__(self, monto: float, fecha: str, descripcion: str, tipo: str):
+        """
+        Inicializa una nueva transacción.
+        
+        :param monto: Monto de la transacción.
+        :param fecha: Fecha de la transacción en formato 'YYYY-MM-DD'.
+        :param descripcion: Descripción de la transacción.
+        :param tipo: Tipo de transacción ('Ingreso' o 'Gasto').
+        """
+        self.monto = monto
+        self.fecha = datetime.strptime(fecha, '%Y-%m-%d')
+        self.descripcion = descripcion
+        self.tipo = tipo
 
-transacciones = []
+    def __repr__(self):
+        """
+        Representación de la transacción en formato legible.
+        """
+        return f"{self.fecha.date()} - {self.tipo} - {self.descripcion}: ${self.monto:.2f}"
 
-# Variable para llevar el registro del balance total
+# Clase que gestiona las transacciones financieras
+class GestorFinanciero:
+    def __init__(self):
+        """
+        Inicializa el gestor financiero con una lista vacía de transacciones.
+        """
+        self.transacciones: List[Transaccion] = []
 
-balance = float(0)
+    def agregar_transaccion(self, monto: float, fecha: str, descripcion: str, tipo: str):
+        """
+        Agrega una nueva transacción a la lista.
+        
+        :param monto: Monto de la transacción.
+        :param fecha: Fecha de la transacción en formato 'YYYY-MM-DD'.
+        :param descripcion: Descripción de la transacción.
+        :param tipo: Tipo de transacción ('Ingreso' o 'Gasto').
+        """
+        transaccion = Transaccion(monto, fecha, descripcion, tipo)
+        self.transacciones.append(transaccion)
 
-def registrar_transaccion():
-    """
-        Esta función permite ingresar una transacción.
+    def listar_transacciones(self):
+        """
+        Muestra todas las transacciones ordenadas por fecha.
+        """
+        for transaccion in sorted(self.transacciones, key=lambda x: x.fecha):
+            print(transaccion)
 
-        returns: (str: tipo)
-    """
-    from app import opcion
+    def calcular_balance(self):
+        """
+        Calcula y retorna el balance financiero actual.
+        
+        :return: Una tupla con el total de ingresos, el total de gastos y la capacidad de ahorro.
+        """
+        ingresos = sum(t.monto for t in self.transacciones if t.tipo == 'Ingreso')
+        gastos = sum(t.monto for t in self.transacciones if t.tipo == 'Gasto')
+        capacidad_ahorro = ingresos - gastos
+        return ingresos, gastos, capacidad_ahorro
 
-    global balance
-    # Verificar si es Ingreso o Gasto
-    if opcion == 1:
-        tipo = "Ingreso"
-    elif opcion == 2:
-        tipo = "Gasto"
-    else:
-        print("La opción no es válida.")
-    
-    # Pedir al usuario que ingrese la información de la transacción
-    monto = float(input("Monto: $"))
-    fecha = str(input("Fecha (YYYY-MM-DD): "))
-    descripcion = input("Ingrese la descripción: ")
-    
-    # Crear un diccionario para la transacción
-    transaccion = {"monto": monto, "fecha": fecha, "descripcion": descripcion, "tipo": tipo}
-    # Agregar la transacción a la lista
-    transacciones.append(transaccion)
+    def guardar_datos(self):
+        """
+        Guarda la lista de transacciones en un archivo utilizando pickle.
+        """
+        with open('datos_financieros.pkl', 'wb') as f:
+            pickle.dump(self.transacciones, f)
 
-    # Se suma o se resta al balance
-    if tipo == "Ingreso":
-        balance += monto
-    elif tipo == "Gasto":
-        balance -= monto
-    else:
-        print("La opción no es válida.")
-    
-    print("¡Transacción agregada con éxito!")
-
-def listar_transacciones():
-    # Mostrar todas las transacciones
-    for i, transaccion in enumerate(transacciones):
-        print(f"Transacción {i+1}:")
-        print(transaccion['tipo'])
-        print(f"Monto: ${transaccion['monto']}")
-        print(f"Fecha: {transaccion['fecha']}")
-        print(f"Descripción: {transaccion['descripcion']}")
-        print()
-
-def guardar_transacciones():
-    # Serializar la lista de transacciones y guardarla en un archivo.pkl
-    with open("transacciones.pkl", "wb") as f:
-        pickle.dump(transacciones, f)
-
-    print("¡Transacciones guardadas con éxito!")
-
-def cargar_transacciones():
-    # Cargar la lista de transacciones desde el archivo.pkl
-    global transacciones
-    try:
-        with open("transacciones.pkl", "rb") as f:
-            transacciones = pickle.load(f)
-    except FileNotFoundError:
-        print("No hay transacciones guardadas.")
-
-def mostrar_balance():
-    print(f"El balance actual es de ${balance}.")
+    def cargar_datos(self):
+        """
+        Carga la lista de transacciones desde un archivo utilizando pickle.
+        Si el archivo no existe, inicializa la lista de transacciones como vacía.
+        """
+        try:
+            with open('datos_financieros.pkl', 'rb') as f:
+                self.transacciones = pickle.load(f)
+        except FileNotFoundError:
+            self.transacciones = []
